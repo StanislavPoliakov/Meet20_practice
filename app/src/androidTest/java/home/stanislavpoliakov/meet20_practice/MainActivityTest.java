@@ -2,14 +2,20 @@ package home.stanislavpoliakov.meet20_practice;
 
 import android.support.test.InstrumentationRegistry;
 import android.support.test.espresso.Espresso;
+import android.support.test.espresso.UiController;
 import android.support.test.espresso.ViewAction;
 import android.support.test.espresso.contrib.RecyclerViewActions;
 import android.support.test.espresso.intent.Intents;
 import android.support.test.espresso.matcher.ViewMatchers;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.view.View;
 
+import org.hamcrest.Description;
+import org.hamcrest.Matcher;
+import org.hamcrest.TypeSafeMatcher;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -31,10 +37,60 @@ import static android.support.test.espresso.intent.matcher.IntentMatchers.hasCom
 @RunWith(AndroidJUnit4.class)
 public class MainActivityTest {
     private static final String TAG = "meet20_logs";
+    private int count;
 
+    private class MyMatcher extends TypeSafeMatcher<View> {
+        //private String matchTo;
+        //private int count;
+
+        public int getCount() {
+            return count;
+        }
+
+        public MyMatcher() {
+
+        }
+
+        @Override
+        protected boolean matchesSafely(View item) {
+            RecyclerView recyclerView = (RecyclerView) item;
+            //Log.d(TAG, "matchesSafely: item = " + item);
+            MyAdapter myAdapter = (MyAdapter) recyclerView.getAdapter();
+            //Log.d(TAG, "matchesSafely: adapter = " + myAdapter);
+            count = myAdapter.getItemCount();
+            //Log.d(TAG, "matchesSafely: count = " + itemCount);
+            /*View mView = recyclerView.getChildAt(itemCount - 1);
+            Log.d(TAG, "matchesSafely: child view = " + mView);
+
+            MyAdapter.MyViewHolder myViewHolder = (MyAdapter.MyViewHolder) recyclerView.getChildViewHolder(mView);*/
+
+            return true;
+        }
+
+        @Override
+        public void describeTo(Description description) {
+            description.appendText("Items count = " + count);
+        }
+    }
 
     @Rule
     public ActivityTestRule<MainActivity> mFirstActivityRule = new ActivityTestRule<>(MainActivity.class);
+
+    @Test
+    public void recyclerViewCountItemsWithMatcherTest() {
+        onView(withId(R.id.sendButton)).perform(click());
+        onView(withId(R.id.recyclerView)).check(matches(isDisplayed()));
+
+        MyMatcher getCount = new MyMatcher();
+
+        onView(withId(R.id.recyclerView)).check(matches(getCount));
+
+        onView(withId(R.id.recyclerView)).perform(RecyclerViewActions.actionOnItemAtPosition(count - 1, click()));
+
+        onView(withId(R.id.nameView)).check(matches(withText("Фамилия Имя Отчество")));
+
+        //Log.d(TAG, "recyclerViewCountItemsWithMatcherTest: count = " + getItemCount);
+    }
 
     @Test
     public void lastNameEditExistTest() {
@@ -93,10 +149,10 @@ public class MainActivityTest {
 
         //Log.d(TAG, "activityRule = " + mFirstActivityRule.getActivity());
 
-        onView(withId(R.id.recyclerView)).perform(RecyclerViewActions.actionOnItemAtPosition(100, click()));
+        onView(withId(R.id.recyclerView)).perform(RecyclerViewActions.actionOnItemAtPosition(12, click()));
 
-        onView(withId(R.id.infoView)).check(matches(isDisplayed()));
-        onView(withId(R.id.infoView)).check(matches(withText(R.string.lermontov)));
+        onView(withId(R.id.nameView)).check(matches(isDisplayed()));
+        onView(withId(R.id.nameView)).check(matches(withText("Иванов Иван Иванович")));
 
         //intended(hasComponent(InfoFragment.class.getName()));
 
